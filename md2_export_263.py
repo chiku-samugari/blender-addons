@@ -754,6 +754,10 @@ class Export_MD2(bpy.types.Operator, ExportHelper):
 		# check how many faces we have (there is a max..)
 		obj = bpy.context.selected_objects[0]
 
+		if obj.type != 'MESH':
+			self.report({'ERROR'}, "Only meshes can be exported (selected object is of type '%s')" % (obj.type))
+			return {'CANCELLED'}
+
 		info = ObjectInfo(obj)
 		cFinalTriangles = info.cTessFaces
 		if cFinalTriangles*3 > 2**16:
