@@ -19,8 +19,8 @@
 bl_info = {
     "name": "Export .md2",
     "description": "Export to Quake2 file format, applies modifiers (.md2)",
-    "author": "Sebastian Lieberknecht, Dao Nguyen and Bernd Meyer metaio GmbH (based on Damien Thebault and Erwan Mathieu's Blender2.4x exporter)",
-    "version": (1, 6),
+    "author": "Sebastian Lieberknecht, Dao Nguyen, Bernd Meyer and Marion Koelle metaio GmbH (based on Damien Thebault and Erwan Mathieu's Blender2.4x exporter)",
+    "version": (1, 7),
     "blender": (2, 6, 3),
     "api": 46461,
     "location": "File > Export > md2",
@@ -34,10 +34,8 @@ import bpy
 from bpy.props import *
 
 from bpy_extras.io_utils import ExportHelper
-from datetime import datetime
 
 import math
-from math import pi
 import mathutils
 
 import struct
@@ -207,10 +205,9 @@ MD2_NORMALS=((-0.525731, 0.000000, 0.850651),
              (-0.425325, 0.688191,-0.587785),
              (-0.425325,-0.688191,-0.587785),
              (-0.587785,-0.425325,-0.688191),
-             (-0.688191,-0.587785,-0.425325))
-
+             (-0.688191,-0.587785,-0.425325))	
 			 
-class MD2:
+class MD2:	
 	def __init__(self, options):
 		self.options = options
 		self.object = None
@@ -429,9 +426,14 @@ class MD2:
 		mesh = self.object.to_mesh(bpy.context.scene, True, 'PREVIEW')
 		
 		mesh.transform(self.object.matrix_world)
-		mesh.transform(mathutils.Matrix.Rotation(pi/2, 4, 'X')) 
-		mesh.transform(mathutils.Matrix.Rotation(pi, 4, 'Z')) 
 
+		if self.options.fmtExport == "Junaio":
+			mesh.transform(mathutils.Matrix.Rotation(math.pi/2, 4, 'X'))
+			mesh.transform(mathutils.Matrix.Rotation(math.pi, 4, 'Z')) 
+		elif self.options.fmtExport == "Quake2":
+			mesh.transform(mathutils.Matrix.Rotation(math.pi/2, 4, 'X'))
+			mesh.transform(mathutils.Matrix.Scale(-1, 4, (0,1,0)))
+			
 		###### compute the bounding box ###############
 		min = [mesh.vertices[0].co[0],
 		       mesh.vertices[0].co[1],
@@ -648,9 +650,9 @@ class ObjectInfo:
 		
 		
 class Export_MD2(bpy.types.Operator, ExportHelper):
-	"""Export to Quake2 file format (.md2)"""
+	"""Export selection to Quake2 file format (.md2)"""
 	bl_idname = "export_quake.md2"
-	bl_label = "Export to Quake2 file format (.md2)"
+	bl_label = "Export selection to Quake2 file format (.md2)"
 
 	filename = StringProperty(name="File Path",
 		description="Filepath used for processing the script",
@@ -677,8 +679,13 @@ class Export_MD2(bpy.types.Operator, ExportHelper):
 	fNameTextureToMD2Filename = BoolProperty(name="Name first texture similar to .md2",
 							description="default: True",
 							default=True)
-
-
+	typesExportFormats = [
+				('Junaio', 'LH (Junaio)', 'Export for Junaio'),
+				('Quake2', 'RH (Quake2 default)', 'Export for Quake2'),
+				]
+	fmtExport = EnumProperty(name="Handedness", 
+				description="Choose handedness of export", 
+				items=typesExportFormats)
 
 	# id_export   = 1
 	# id_cancel   = 2
@@ -702,7 +709,6 @@ class Export_MD2(bpy.types.Operator, ExportHelper):
 		
 		props = self.properties
 		filepath = self.filepath
-		filepath = bpy.path.ensure_ext(filepath, self.filename_ext)
 
 		object = self.object
 		originalObject = object
@@ -771,7 +777,7 @@ class Export_MD2(bpy.types.Operator, ExportHelper):
 
 
 def menuCB(self, context):
-	self.layout.operator(Export_MD2.bl_idname, text="MD2 (.md2)")
+	self.layout.operator(Export_MD2.bl_idname, text="Quake II's MD2 (.md2)")
  
 def register():
 	bpy.utils.register_module(__name__)
