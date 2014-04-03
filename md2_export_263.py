@@ -221,14 +221,21 @@ class MD2:
 	def write(self, filename):
 		self.version = 8
 
-		self.skinwidth = 2**10-1 #1023
-		self.skinheight = 2**10-1 #1023
-
 		# self.framesize : see below
 
 		mesh = self.object.data
 
-		skins = Util.getSkins(mesh)
+		skins,sizes = Util.getSkins(mesh)
+
+		self.skinwidth = 0
+		self.skinheight = 0
+
+		for size in sizes:
+			if self.skinwidth < size[0]:
+				self.skinwidth = size[0]
+
+			if self.skinheight < size[1]:
+				self.skinheight = size[1]
 
 		self.num_skins = len(skins)
 		self.num_xyz = len(mesh.vertices)
@@ -603,14 +610,16 @@ class Util:
 	@staticmethod
 	def getSkins(mesh):
 		skins = []
+		sizes = []
 		for material in mesh.materials:
 			for texSlot in material.texture_slots:
 				if not texSlot or texSlot.texture.type != "IMAGE": 
 					continue
 
 				skins.append(texSlot.texture.image.filepath)
+				sizes.append(texSlot.texture.image.size)
 		
-		return skins
+		return skins,sizes
 			
 		
 class ObjectInfo:
@@ -626,7 +635,7 @@ class ObjectInfo:
 			originalObject = object
 			mesh = object.data
 
-			self.skins = Util.getSkins(mesh)
+			self.skins = Util.getSkins(mesh)[0]
 
 			tmpObjectName = Util.pickName()
 			try:
