@@ -616,8 +616,9 @@ class Util:
 				if not texSlot or texSlot.texture.type != "IMAGE": 
 					continue
 
-				skins.append(texSlot.texture.image.filepath)
-				sizes.append(texSlot.texture.image.size)
+				if not texSlot.texture.image.filepath in skins:
+					skins.append(texSlot.texture.image.filepath)
+					sizes.append(texSlot.texture.image.size)
 		
 		return skins,sizes
 			
